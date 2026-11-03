@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { Navbar } from "@/react/nav";
 
 const inter = Inter({
   style: 'normal' 
@@ -15,6 +16,7 @@ export default function Layout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={inter.className}>
       <body>
+        <Navbar />
         {children}
       </body>
     </html>
