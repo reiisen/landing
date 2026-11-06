@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+const built = new Date(process.env.NEXT_PUBLIC_BUILD_TIME!)
+  .toISOString()
+  .slice(0, 16)
+  .replace("T", " ");
+
 export function Navbar() {
   const [hidden, setHidden] = useState(false);
   const lastY = useRef(0);
@@ -11,7 +16,6 @@ export function Navbar() {
     const onScroll = () => {
       const y = window.scrollY;
 
-      // within the first screenful: always visible
       if (y <= window.innerHeight) {
         setHidden(false);
         lastY.current = y;
@@ -19,9 +23,9 @@ export function Navbar() {
       }
 
       const dy = y - lastY.current;
-      if (Math.abs(dy) < 8) return; // ignore tiny jitter
+      if (Math.abs(dy) < 8) return;
 
-      setHidden(dy > 0); // down = hide, up = show
+      setHidden(dy > 0);
       lastY.current = y;
     };
 
@@ -33,7 +37,7 @@ export function Navbar() {
   return (
     <div className="group sticky top-0 z-50 h-10">
       <nav
-        className={`flex h-10 items-center gap-4 bg-white px-4 transition-transform duration-200 dark:bg-black ${
+        className={`flex h-10 items-center gap-4 border-b border-line/50 bg-paper px-4 transition-transform duration-200 ${
           hidden
             ? "-translate-y-full group-hover:translate-y-0 group-focus-within:translate-y-0"
             : ""
@@ -41,6 +45,12 @@ export function Navbar() {
       >
         <Link href="/">Home</Link>
         <Link href="/blog">Blog</Link>
+
+        <p className="ml-auto hidden truncate text-xs text-ink/60 md:block">
+          {process.env.NEXT_PUBLIC_BUILT_WITH}
+          <span className="mx-2">/</span>
+          built {built} UTC
+        </p>
       </nav>
     </div>
   );

@@ -1,25 +1,119 @@
+/* app/globals.css */
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #fafaf7;
+  --ink: #1a1a1a;
+  --line: #d4d4d0;
+  --code-bg: #f6f8fa;
 }
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --paper: #0f0f0f;
+    --ink: #e6e6e3;
+    --line: #2e2e2e;
+    --code-bg: #0d1117;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-line: var(--line);
+}
+
+/* square everything: every rounded-* size resolves to 0 */
+@theme {
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-4xl: 0;
+}
+
+body { background: var(--paper); color: var(--ink); }
+
+/* make prose use the same palette, and square its code blocks */
+.prose {
+  --tw-prose-body: var(--ink);
+  --tw-prose-headings: var(--ink);
+  --tw-prose-links: var(--ink);
+  --tw-prose-bold: var(--ink);
+  --tw-prose-quotes: var(--ink);
+  --tw-prose-quote-borders: var(--line);
+  --tw-prose-hr: var(--line);
+  --tw-prose-code: var(--ink);
+  --tw-prose-pre-bg: var(--code-bg);
+  --tw-prose-pre-code: var(--ink);
+}
+.prose pre { border-radius: 0; }
+.prose :is(h1, h2, h3, h4) { scroll-margin-top: 4rem; }
+html { scroll-behavior: smooth; }
+
+.scenes {
+  --g: color-mix(in oklab, var(--ink) 14%, transparent);
+  --mx: 50vw;
+  --my: 50vh;
+  /* desaturated, fixed palette: rose, sand, sage, slate, lilac */
+  --glow: linear-gradient(115deg, #c9a9a2 0%, #cdbb92 28%, #a3bda8 52%, #9fb2cc 76%, #b9a6c6 100%);
+}
+
+.scene { position: absolute; inset: 0; opacity: 0; transition: opacity 0.9s ease; }
+.scene[data-on="true"] { opacity: 1; }
+
+/* each scene only defines its pattern as an opaque mask shape */
+.scene-hero {
+  --pat: radial-gradient(#000 0.7px, transparent 1.5px);
+  --pat-size: 26px 26px;
+  --fade: radial-gradient(ellipse 70% 60% at 25% 45%, #000 20%, transparent 75%);
+}
+.scene-stack {
+  --pat: repeating-radial-gradient(circle at 25% 50%, transparent 0, transparent 45.5px, #000 46.5px, transparent 47.5px);
+}
+@media (max-width: 767px) {
+  .scene-stack {
+    --pat: repeating-radial-gradient(circle at 50% 25%, transparent 0, transparent 45.5px, #000 46.5px, transparent 47.5px);
+  }
+}
+.scene-work {
+  --pat: repeating-linear-gradient(177deg, transparent 0, transparent 37.5px, #000 38.5px, transparent 39.5px);
+}
+
+.scene::before,
+.scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  mask-size: var(--pat-size, auto), 100% 100%;
+  mask-repeat: repeat, no-repeat;
+  mask-composite: intersect;
+}
+
+/* base: the gray pattern, with the hero's edge fade */
+.scene::before {
+  background: var(--g);
+  mask-image: var(--pat), var(--fade, linear-gradient(#000, #000));
+}
+
+/* tint: the gradient, visible only where pattern and spotlight overlap */
+.scene::after {
+  background: var(--glow);
+  mask-image: var(--pat), radial-gradient(circle 240px at var(--mx) var(--my), #000, transparent);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.scenes[data-spot="true"] .scene::after { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) { .scene, .scene::after { transition: none; } }
+
+@supports (-moz-appearance: none) {
+  .project-card {
+    outline: 1px solid transparent;
+    backface-visibility: hidden;
+  }
+  .project-track { will-change: auto; }
 }

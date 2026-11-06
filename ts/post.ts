@@ -1,6 +1,10 @@
 import fs from "node:fs/promises"
 import path from "node:path";
 import matter from "gray-matter";
+import { visit } from "unist-util-visit";
+import { fromMarkdown } from "mdast-util-from-markdown";
+import GithubSlugger from "github-slugger"
+import { toString } from "mdast-util-to-string";
 
 export type PostIndexEntry = {
   slug: string
@@ -18,6 +22,12 @@ export type MdData = {
   content: string
 }
 
+export type Toc = {
+  depth: number
+  text: string
+  id: string
+}
+
 export function generatePreview(raw: string) {
   const preview = raw
     .split(/\r?\n/)
@@ -28,7 +38,7 @@ export function generatePreview(raw: string) {
         !l.startsWith("#") &&
         !l.startsWith("import") &&
         !l.startsWith("export") &&
-        !l.startsWith("<") &&
+        !l.startsWith(">") &&
         !l.startsWith("```")
       )
     })
@@ -76,4 +86,22 @@ export async function getPostIndexes(): Promise<PostIndexEntry[]> {
   )
 
   return posts.sort((a, b) => { return b.date.getTime() - a.date.getTime() })
+}
+
+export function getToc(content: string, maxDepth: number) {
+  const tocs: Toc[] = []
+  visit(fromMarkdown(content), "heading", (node) => {
+    if (node.depth <= maxDepth) {
+      const slugger = new GithubSlugger();
+      const text = toString(node);
+      const id = slugger.slug(text);
+      tocs.push({
+        depth: node.depth,
+        text: text,
+        id: id
+      }) 
+    }
+  } ) 
+
+  return tocs;
 }

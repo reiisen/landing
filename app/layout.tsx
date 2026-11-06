@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/react/nav";
 
-const inter = Inter({
-  style: 'normal' 
-})
+const mono = DM_Sans({ subsets: ["latin"], weight: ["300", "400"] });
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -14,10 +12,12 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={inter.className}>
+    <html lang="en" className={mono.className} data-scroll-behavior="smooth">
       <body>
         <Navbar />
-        {children}
+        <main className="mx-auto max-w-xl py-8">
+          {children}
+        </main>
       </body>
     </html>
   )
