@@ -7,6 +7,7 @@ import GithubSlugger from "github-slugger"
 import { toString } from "mdast-util-to-string";
 
 export type PostIndexEntry = {
+  title: string
   slug: string
   date: Date
   preview: string
