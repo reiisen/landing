@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -8,6 +8,10 @@ export function Change({ className }: { className?: string }) {
   const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
   const [covering, setCovering] = useState(false);
+
+  useEffect(() => {
+    setCovering(false);
+  }, []);
 
   const go = () => {
     dialog.current?.close();
@@ -55,8 +59,10 @@ export function Change({ className }: { className?: string }) {
         onTransitionEnd={() => {
           if (covering) router.push("/about");
         }}
-        className={`fixed inset-0 z-[90] bg-ink transition-transform duration-700 ease-in-out ${
-          covering ? "translate-y-0" : "pointer-events-none translate-y-full"
+        className={`fixed inset-0 z-[90] bg-ink ${
+          covering
+            ? "translate-y-0 transition-transform duration-700 ease-in-out"
+            : "pointer-events-none translate-y-full"
         }`}
       />
     </>

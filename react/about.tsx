@@ -298,9 +298,62 @@ export function About() {
           )
           .from(".hero-fade", { opacity: 0, y: 10, stagger: 0.15, duration: 0.6, ease: "power2.out" }, "<");
 
-        // real loading: fonts + every <img> in the DOM
-        const imgs = Array.from(root.current!.querySelectorAll("img"));
-        const tasks: Promise<unknown>[] = [document.fonts.ready, ...imgs.map((img) => img.decode())];
+        // console-style log: lines are queued and printed ~45ms apart so a burst still reads like a stream
+        const t0 = performance.now();
+        const logEl = root.current!.querySelector<HTMLElement>(".log")!;
+        logEl.replaceChildren();
+        const queue: string[] = [];
+        const flush = setInterval(() => {
+          const text = queue.shift();
+          if (!text) return;
+          const line = document.createElement("div");
+          line.textContent = text;
+          logEl.appendChild(line);
+          while (logEl.children.length > 10) logEl.firstElementChild!.remove();
+          const n = logEl.children.length;
+          Array.from(logEl.children).forEach((el, i) => {
+            (el as HTMLElement).style.opacity = String(0.3 + 0.7 * ((i + 1) / n)); // older lines fade
+          });
+        }, 45);
+        const log = (text: string) =>
+          queue.push(`[${((performance.now() - t0) / 1000).toFixed(2)}s] ${text}`);
+        const drained = () =>
+          new Promise<void>((res) => {
+            const c = setInterval(() => {
+              if (!queue.length) {
+                clearInterval(c);
+                res();
+              }
+            }, 50);
+          });
+
+        // real loading: fonts + every <img>, one log line per unique asset
+        const label = (img: HTMLImageElement) => {
+          try {
+            const u = new URL(img.currentSrc || img.src, window.location.href);
+            return u.searchParams.get("url") ?? u.pathname; // next/image keeps the real path in ?url=
+          } catch {
+            return img.src;
+          }
+        };
+        const logged = new Set<string>();
+        const once = (name: string, text: string) => {
+          if (logged.has(name)) return;
+          logged.add(name);
+          log(text);
+        };
+
+        log("mounted /about");
+        const tasks: Promise<unknown>[] = [
+          document.fonts.ready.then(() => log("fonts ready")),
+          ...Array.from(root.current!.querySelectorAll("img")).map((img) => {
+            const name = label(img);
+            return img.decode().then(
+              () => once(name, `ok      ${name}`),
+              () => once(name, `FAILED  ${name}`),
+            );
+          }),
+        ];
 
         const shown = { v: 0 };
         const render = () => {
@@ -323,7 +376,10 @@ export function About() {
         const minTime = new Promise((r) => setTimeout(r, 900));
         const failsafe = new Promise((r) => setTimeout(r, 10000));
 
-        Promise.all([Promise.race([Promise.allSettled(tasks), failsafe]), minTime]).then(() => {
+        Promise.all([Promise.race([Promise.allSettled(tasks), failsafe]), minTime]).then(async () => {
+          if (cancelled) return;
+          log("all assets ready");
+          await drained(); // let the last lines print before the exit
           if (cancelled) return;
           gsap.to(shown, { v: 100, duration: 0.3, onUpdate: render, onComplete: () => tl.play() });
         });
@@ -387,6 +443,7 @@ export function About() {
 
         return () => {
           cancelled = true;
+          clearInterval(flush);
           document.body.style.overflow = "";
           wrap.dataset.loop = "false";
           wrap.removeEventListener("pointerenter", onEnter);
@@ -424,11 +481,14 @@ export function About() {
         <style>{`.loader{display:none}`}</style>
       </noscript>
 
-      <div className="loader fixed inset-0 z-[100] flex items-end justify-between bg-ink p-6 text-paper">
-        <span>loading</span>
-        <span className="text-6xl tabular-nums">
-          <span ref={counter}>0</span>%
-        </span>
+      <div className="loader fixed inset-0 z-[100] flex flex-col justify-end gap-6 bg-ink p-6 text-paper">
+        <div aria-hidden className="log flex max-w-xl flex-col justify-end overflow-hidden font-mono text-xs" />
+        <div className="flex items-end justify-between">
+          <span>loading</span>
+          <span className="text-6xl tabular-nums">
+            <span ref={counter}>0</span>%
+          </span>
+        </div>
       </div>
 
       <div data-section="hero">

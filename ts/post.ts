@@ -8,17 +8,16 @@ import { toString } from "mdast-util-to-string";
 
 export type PostIndexEntry = {
   slug: string
-  title: string
   date: Date
   preview: string
 }
 
-export type PostMetadata = { title: string
+export type PostMetadata = { 
   date: string
 }
 
 export type MdData = {
-  data: PostMetadata
+  meta: PostMetadata
   content: string
 }
 
@@ -49,9 +48,18 @@ export function generatePreview(raw: string) {
 export async function getMdFiles() {
   "use cache";
 
+  const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
   const mdDir = path.join(process.cwd(), "content")  
   const files = (await fs.readdir(mdDir))
     .filter((file) => file.endsWith('.md'))
+    .map((file) => file.slice(0, -3))
+
+  // BUILD TIME CHECK
+  for (const file of files) {
+    if (!KEBAB.test(file)) {
+      throw new Error(`content/${file}.md: use a kebab-case filename, e.g. my-first-review.md`);
+    }
+  }
 
   return files
 }
@@ -61,7 +69,7 @@ export async function readMdFile(file: string): Promise<MdData> {
   const mdx = matter(await fs.readFile(path.join(mdDir, file), "utf-8")) 
   
   const {data, content} = mdx;
-  return {data: data as PostMetadata, content: content}
+  return {meta: data as PostMetadata, content: content}
 }
 
 export async function getPostIndexes(): Promise<PostIndexEntry[]> {
@@ -73,12 +81,13 @@ export async function getPostIndexes(): Promise<PostIndexEntry[]> {
     // map files to into multiple promises
     files.map(
       async (file) => {
-        const {data, content} = await readMdFile(file);
+        const {meta, content} = await readMdFile(file + ".md");
+        const slug = file
         
         return {
-          slug: file.slice(0, -3),
-          title: data.title,
-          date: new Date(data.date),
+          slug: slug,
+          title: getTitle(content, slug),
+          date: new Date(meta.date),
           preview: generatePreview(content)
         }
       }
@@ -88,7 +97,7 @@ export async function getPostIndexes(): Promise<PostIndexEntry[]> {
   return posts.sort((a, b) => { return b.date.getTime() - a.date.getTime() })
 }
 
-export function getToc(content: string, maxDepth: number) {
+export function getToc(content: string, maxDepth: number = 3) {
   const tocs: Toc[] = []
   visit(fromMarkdown(content), "heading", (node) => {
     if (node.depth <= maxDepth) {
@@ -104,4 +113,12 @@ export function getToc(content: string, maxDepth: number) {
   } ) 
 
   return tocs;
+}
+
+export function getTitle(markdown: string, slug: string): string {
+  const h1 = fromMarkdown(markdown).children.find(
+    (n) => n.type === "heading" && n.depth === 1,
+  );
+  if (!h1) throw new Error(`content/${slug}.md has no "# Title" heading`);
+  return toString(h1);
 }

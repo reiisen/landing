@@ -13,9 +13,9 @@ export const metadata: Metadata = {
 export default function Layout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={mono.className} data-scroll-behavior="smooth">
-      <body>
+      <body className="flex min-h-dvh flex-col">
         <Navbar />
-        <main className="mx-auto max-w-xl py-8">
+        <main className="flex flex-1 flex-col mx-auto max-w-xl py-8">
           {children}
         </main>
       </body>

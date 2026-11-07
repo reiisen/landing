@@ -1,10 +1,11 @@
 import { TocBox } from "@/react/toc";
 import { getMdFiles, getToc, readMdFile } from "@/ts/post";
 import { Suspense } from "react";
-import Markdown, { MarkdownAsync } from "react-markdown";
+import { MarkdownAsync } from "react-markdown";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 import rehypeStarryNight from "rehype-starry-night"
+import { getMdComponents } from "@/react/presets";
 
 export async function generateStaticParams() {
   const files = await getMdFiles();
@@ -25,11 +26,7 @@ async function Post({ params }: { params: Promise<{ slug: string }> }) {
         <MarkdownAsync
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeSlug, rehypeStarryNight]}
-          components={{
-            blockquote: ({ children }) => (
-              <blockquote className="whitespace-pre-line">{children}</blockquote>
-            ),
-          }}
+          components={getMdComponents(slug)}
         >
           {content}
         </MarkdownAsync>

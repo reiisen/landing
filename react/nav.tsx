@@ -37,16 +37,16 @@ export function Navbar() {
   return (
     <div className="group sticky top-0 z-50 h-10">
       <nav
-        className={`flex h-10 items-center gap-4 border-b border-line/50 bg-paper px-4 transition-transform duration-200 ${
+        className={`flex h-10 items-center gap-4 border-b border-line/50 bg-paper text-xs text-ink/60  px-4 transition-transform duration-200 ${
           hidden
             ? "-translate-y-full group-hover:translate-y-0 group-focus-within:translate-y-0"
             : ""
         }`}
       >
-        <Link href="/">Home</Link>
-        <Link href="/blog">Blog</Link>
+        <Link href="/">home</Link>
+        <Link href="/blog">blog</Link>
 
-        <p className="ml-auto hidden truncate text-xs text-ink/60 md:block">
+        <p className="ml-auto hidden truncate md:block">
           {process.env.NEXT_PUBLIC_BUILT_WITH}
           <span className="mx-2">/</span>
           built {built} UTC

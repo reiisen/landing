@@ -6,7 +6,7 @@ export default async function Page() {
 
   return (
     <div className="prose dark:prose-invert max-w-none">
-      <h1>Blog</h1>
+      <h1>blog</h1>
       <ul className="list-none p-0">
         {posts.map((post) => {
           const date = new Date(post.date);
